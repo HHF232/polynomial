@@ -3,12 +3,12 @@ from copy import deepcopy
 
 class Polynomial(object):
     def __init__(self, *coeff):
-        if len(coeff) == 1 and isinstance(coeff[0], list):
+        if isinstance(coeff[0], list):
             listt = deepcopy(list(coeff[0]))
             while listt[-1] == 0 and len(listt) >= 2:
                 listt = listt[:len(listt) - 1]
             self.coeff = listt
-        elif len(coeff) == 1 and isinstance(coeff[0], dict):
+        elif isinstance(coeff[0], dict):
             listt = []
             dictt = deepcopy(dict(coeff[0]))
             for i in range(max(dictt.keys()) + 1):
@@ -24,6 +24,8 @@ class Polynomial(object):
             while listt[-1] == 0 and len(listt) >= 2:
                 listt = listt[:len(listt) - 1]
             self.coeff = listt
+        elif isinstance(coeff[0], Polynomial):
+            self.coeff = deepcopy(coeff[0].coeff)
         else:
             raise BaseException(self)
 
@@ -234,3 +236,88 @@ class Polynomial(object):
             return monome
         else:
             raise StopIteration
+
+    def der(self, *num):
+        if isinstance(num[0], int) and len(num) == 1 :
+            listt = deepcopy(self.coeff)
+            j = 1
+            while j <= num[0]:
+                for i in range(len(listt)):
+                    listt[i] *= i
+                if len(listt) > 1:
+                    listt = listt[1:]
+                j += 1
+            return Polynomial(listt)
+        elif len(num) == 0:
+            listt = deepcopy(self.coeff)
+            for i in range(len(listt)):
+                listt[i] *= i
+            if len(listt) > 1:
+                listt = listt[1:]
+            return Polynomial(listt)
+        else:
+            raise BaseException(self)
+
+
+class QuadraticPolynomial(Polynomial):
+    def __init__(self, coeff):
+        if isinstance(coeff, list) and len(coeff) <= 3:
+            super().__init__(coeff)
+        else:
+            raise BaseException(self)
+
+    def solve(self):
+        if len(self.coeff) == 3:
+            discr = self.coeff[1] ** 2 - 4 * self.coeff[0] * self.coeff[2]
+            if discr > 0:
+                x1 = (-self.coeff[1] + discr ** (1 / 2)) / (2 * self.coeff[2])
+                x2 = (-self.coeff[1] - discr ** (1 / 2)) / (2 * self.coeff[2])
+                return [min(x1, x2), max(x1, x2)]
+            elif discr == 0:
+                x1 = -self.coeff[1] / (2 * self.coeff[2])
+                return [x1]
+            else:
+                return []
+        elif len(self.coeff) == 2:
+            if self.coeff[1] != 0:
+                x1 = -self.coeff[0] / self.coeff[1]
+                return [x1]
+            elif self.coeff[0] == 0:
+                return "All"
+            else:
+                return []
+        else:
+            if self.coeff[0] == 0:
+                return "All"
+            else:
+                return []
+
+
+class RealPolynomial(Polynomial):
+    def __init__(self, coeff):
+        if isinstance(coeff, list):
+            polly = Polynomial(coeff)
+            if polly.degree() % 2 == 1:
+                super().__init__(coeff)
+            else:
+                raise BaseException(self)
+        else:
+            raise BaseException(self)
+
+    def find_root(self):
+        nach = -64
+        con = 64
+        while (Polynomial(self.coeff)(nach) >= 0 and Polynomial(self.coeff)(con) >= 0) or (Polynomial(self.coeff)(nach) <= 0 and Polynomial(self.coeff)(con) <= 0):
+            nach = nach * 2
+            con = con * 2
+        while con - nach >= 2 * (-17):
+            mid1 = nach + ((con - nach) / 3)
+            mid2 = 2 * mid1 - nach
+            if (Polynomial(self.coeff)(nach) >= 0 and Polynomial(self.coeff)(mid1) <= 0) or (Polynomial(self.coeff)(nach) <= 0 and Polynomial(self.coeff)(mid1) >= 0):
+                con = mid1
+            elif (Polynomial(self.coeff)(mid2) >= 0 and Polynomial(self.coeff)(mid1) <= 0) or (Polynomial(self.coeff)(mid2) <= 0 and Polynomial(self.coeff)(mid1) >= 0):
+                con = mid2
+                nach = mid2
+            else:
+                nach = mid2
+        return nach
